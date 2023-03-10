@@ -1,0 +1,5 @@
+package: dinonce
+output:   third_party/dinonce/generated/dinonce.gen.go
+generate:
+  models: true
+  client: true

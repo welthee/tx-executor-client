@@ -1,0 +1,479 @@
+asyncapi: 2.5.0
+info:
+  title: Welthee Tx Executor API
+  version: "0.1.0"
+  description: This is Welthee"s Transaction Executor
+  termsOfService: "http://welthee.com/tac"
+  contact:
+    name: API Support
+    email: dev.backend@welthee.com
+servers:
+  local:
+    url: http://localhost:5060/
+    protocol: ws
+    description: Unsecured api.
+channels:
+  /ws:
+    parameters:
+      xClientId:
+        description: Id of the client.
+        schema:
+          type: string
+        location: $message.header#/x-client-id
+    publish:
+      operationId: sendMessage
+      message:
+        $ref: "#/components/messages/Command"
+    subscribe:
+      operationId: processMessage
+      message:
+        $ref: "#/components/messages/Event"
+
+components:
+  messages:
+    Command:
+      description: Command sent for execution.
+      payload:
+        anyOf:
+          - $ref: "#/components/schemas/Command"
+          - $ref: "#/components/schemas/ModelError"
+    Event:
+      description: Event resulted from execution.
+      payload:
+        anyOf:
+          - $ref: "#/components/schemas/Event"
+          - $ref: "#/components/schemas/ModelError"
+
+    SubmitTransaction:
+      description: Transaction sent for execution.
+      payload:
+        anyOf:
+          - $ref: "#/components/schemas/SubmitTransaction"
+          - $ref: "#/components/schemas/ModelError"
+      x-response:
+        $ref: "#/components/schemas/TransactionSpeededUp"
+    InterrogateTransaction:
+      description: Interrogate transaction details.
+      payload:
+        anyOf:
+          - $ref: "#/components/schemas/InterrogateTransaction"
+          - $ref: "#/components/schemas/ModelError"
+      x-response:
+        $ref: "#/components/schemas/TransactionInterrogated"
+
+    SpeedUpTransaction:
+      description: Update transaction execution.
+      payload:
+        anyOf:
+          - $ref: "#/components/schemas/SpeedUpTransaction"
+          - $ref: "#/components/schemas/ModelError"
+      x-response:
+        $ref: "#/components/schemas/TransactionSpeededUp"
+
+    CreateAccount:
+      description: Create execution account.
+      payload:
+        anyOf:
+          - $ref: "#/components/schemas/CreateAccount"
+          - $ref: "#/components/schemas/ModelError"
+      x-response:
+        $ref: "#/components/schemas/AccountCreated"
+
+    DisableAccount:
+      description: Disable execution account.
+      payload:
+        anyOf:
+          - $ref: "#/components/schemas/DisableAccount"
+          - $ref: "#/components/schemas/ModelError"
+      x-response:
+        $ref: "#/components/schemas/AccountDisabled"
+
+    ListAccount:
+      description: List execution account.
+      payload:
+        anyOf:
+          - $ref: "#/components/schemas/ListAccount"
+          - $ref: "#/components/schemas/ModelError"
+      x-response:
+        $ref: "#/components/schemas/AccountDetailed"
+
+    TransactionSubmitted:
+      description: Transaction submitted details.
+      payload:
+        $ref: "#/components/schemas/TransactionSubmitted"
+      examples:
+        - payload:
+    TransactionSpeededUp:
+      description: Transaction submitted details.
+      payload:
+        $ref: "#/components/schemas/TransactionSpeededUp"
+
+    TransactionInterrogated:
+      description: Transaction details.
+      payload:
+        $ref: "#/components/schemas/TransactionInterrogated"
+
+    TransactionCompleted:
+      description: Transaction details.
+      payload:
+        $ref: "#/components/schemas/TransactionCompleted"
+
+  schemas:
+    Command:
+      type: object
+      required:
+        - details
+        - kind
+      properties:
+        kind:
+          $ref: "#/components/schemas/CommandKind"
+        details:
+          oneOf:
+            - $ref: "#/components/schemas/SubmitTransaction"
+            - $ref: "#/components/schemas/SpeedUpTransaction"
+            - $ref: "#/components/schemas/InterrogateTransaction"
+            - $ref: "#/components/schemas/CreateAccount"
+            - $ref: "#/components/schemas/ListAccount"
+            - $ref: "#/components/schemas/DisableAccount"
+      additionalProperties: false
+    SubmitTransaction:
+      type: object
+      required:
+        - context
+        - binaryHex
+        - blockchain
+      properties:
+        context:
+          $ref: "#/components/schemas/TxContext"
+        binaryHex:
+          type: string
+        blockchain:
+          type: string
+        priority:
+          $ref: "#/components/schemas/Priority"
+        retry:
+          type: boolean
+      additionalProperties: false
+      example:
+        binaryHex: "AuOAgICAgJQiggC+PPnjQiLfQVHJesR/ySE7UIMPQkCAwICAgA=="
+        blockchain: "POLYGON"
+        retry: false
+        priority: "LOW"
+
+    Priority:
+      type: string
+      enum:
+        - low
+        - standard
+        - fast
+      additionalProperties: false
+
+    CommandKind:
+      type: string
+      enum:
+        - submitTx
+        - interrogateTx
+        - speedUpTx
+        - createAccount
+        - listAccount
+        - disableAccount
+
+    EventKind:
+      type: string
+      enum:
+        - submitted
+        - interrogated
+        - speededup
+        - completed
+        - accountCreated
+        - accountDetailed
+        - accountDisabled
+
+    InterrogateTransaction:
+      type: object
+      required:
+        - context
+        - blockchain
+      properties:
+        blockchain:
+          type: string
+        context:
+          $ref: "#/components/schemas/TxContext"
+      additionalProperties: false
+      example:
+        blockchain: "POLYGON"
+
+    SpeedUpTransaction:
+      type: object
+      required:
+        - context
+        - blockchain
+      properties:
+        context:
+          $ref: "#/components/schemas/TxContext"
+        blockchain:
+          type: string
+        priority:
+          $ref: "#/components/schemas/Priority"
+      additionalProperties: false
+      example:
+        priority: "FAST"
+        blockchain: "POLYGON"
+
+    CancelTransaction:
+      type: object
+      required:
+        - context
+        - blockchain
+      properties:
+        blockchain:
+          type: string
+        context:
+          $ref: "#/components/schemas/TxContext"
+      additionalProperties: false
+
+    Event:
+      type: object
+      required:
+        - kind
+        - details
+      properties:
+        kind:
+          $ref: "#/components/schemas/EventKind"
+        details:
+          oneOf:
+            - $ref: "#/components/schemas/TransactionSubmitted"
+            - $ref: "#/components/schemas/TransactionSpeededUp"
+            - $ref: "#/components/schemas/TransactionCanceled"
+            - $ref: "#/components/schemas/TransactionInterrogated"
+            - $ref: "#/components/schemas/TransactionCompleted"
+            - $ref: "#/components/schemas/AccountCreated"
+            - $ref: "#/components/schemas/AccountDetailed"
+            - $ref: "#/components/schemas/AccountDisabled"
+      additionalProperties: false
+
+    TransactionSubmitted:
+      type: object
+      properties:
+        id:
+          type: string
+        context:
+          $ref: "#/components/schemas/TxContext"
+      required:
+        - id
+        - context
+      additionalProperties: false
+      example:
+        id: "2KCKL6VaGjofoKZLs9u1P6xF3hD"
+
+    TransactionSpeededUp:
+      type: object
+      properties:
+        id:
+          type: string
+        context:
+          $ref: "#/components/schemas/TxContext"
+      required:
+        - id
+        - context
+      additionalProperties: false
+      example:
+        id: "2KCKL6VaGjofoKZLs9u1P6xF3hD"
+
+    TransactionCanceled:
+      type: object
+      properties:
+        id:
+          type: string
+        context:
+          $ref: "#/components/schemas/TxContext"
+      required:
+        - id
+        - context
+      additionalProperties: false
+
+    TransactionInterrogated:
+      type: object
+      properties:
+        id:
+          type: string
+        details:
+          $ref: "#/components/schemas/TransactionDetails"
+        context:
+          $ref: "#/components/schemas/TxContext"
+      required:
+        - id
+        - context
+        - details
+      additionalProperties: false
+      example:
+        id: "2KCKL6VaGjofoKZLs9u1P6xF3hD"
+
+    TransactionCompleted:
+      type: object
+      properties:
+        id:
+          type: string
+        details:
+          $ref: "#/components/schemas/TransactionDetails"
+        context:
+          $ref: "#/components/schemas/TxContext"
+      required:
+        - id
+        - context
+        - details
+      additionalProperties: false
+
+    TransactionDetails:
+      type: object
+      properties:
+        status:
+          type: string
+        hash:
+          type: string
+      required:
+        - status
+      additionalProperties: false
+      example:
+        status: "COMPLETED"
+        hash: "0x95163140b96c6e57bd586d6ed21ddbd5ac05b1fc5ee2ca6f5e85e8fd998add20"
+
+    TxContext:
+      type: object
+      required:
+        - externalRef
+        - accountRef
+      properties:
+        externalRef:
+          type: string
+        accountRef:
+          type: string
+      additionalProperties: false
+      example:
+        externalRef: "myAccount"
+        accountRef: "2KCGVUUcP0ZwKQryzsutxSilBeF"
+
+    ModelError:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        key:
+          type: string
+        message:
+          type: string
+      additionalProperties: false
+      example:
+        code: 400
+        key: "invalid_request"
+        message: "missing kind"
+
+    CreateAccount:
+      type: object
+      properties:
+        context:
+          $ref: "#/components/schemas/AccountContext"
+        blockchain:
+          type: string
+        kind:
+          $ref: "#/components/schemas/AccountKind"
+        details:
+          oneOf:
+            - $ref: "#/components/schemas/PKAccountDetails"
+            - $ref: "#/components/schemas/KmsAccountDetails"
+      required:
+        - context
+        - kind
+      additionalProperties: false
+
+    AccountKind:
+      type: object
+      enum:
+        - pk
+        - kms
+
+    PKAccountDetails:
+      type: object
+      properties:
+        key:
+          type: string
+      required:
+        - key
+      additionalProperties: false
+
+    KmsAccountDetails:
+      type: object
+      additionalProperties: false
+
+    DisableAccount:
+      type: object
+      properties:
+        context:
+          $ref: "#/components/schemas/AccountContext"
+      required:
+        - context
+      additionalProperties: false
+
+    ListAccount:
+      type: object
+      properties:
+        context:
+          $ref: "#/components/schemas/AccountContext"
+      required:
+        - context
+      additionalProperties: false
+
+    AccountContext:
+      type: object
+      required:
+        - externalRef
+      properties:
+        externalRef:
+          type: string
+      additionalProperties: false
+
+    AccountCreated:
+      type: object
+      required:
+        - externalRef
+        - id
+      properties:
+        context:
+          $ref: "#/components/schemas/AccountContext"
+        id:
+          type: string
+        address:
+          type: string
+      additionalProperties: false
+
+    AccountDisabled:
+      type: object
+      required:
+        - externalRef
+      properties:
+        context:
+          $ref: "#/components/schemas/AccountContext"
+        id:
+          type: string
+      additionalProperties: false
+
+    AccountDetailed:
+      type: object
+      required:
+        - externalRef
+      properties:
+        id:
+          type: string
+        context:
+          $ref: "#/components/schemas/AccountContext"
+        kind:
+          $ref: "#/components/schemas/AccountKind"
+        address:
+          type: string
+        active:
+          type: boolean
+      additionalProperties: false
