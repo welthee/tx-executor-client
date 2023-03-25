@@ -5,8 +5,8 @@ dist/**
 **/.DS_Store
 
 # generated files
-**/generated
-**/**.gen.go
+#**/generated
+#**/**.gen.go
 openapi-generator
 dist/
 
