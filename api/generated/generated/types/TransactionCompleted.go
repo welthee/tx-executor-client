@@ -1,9 +1,8 @@
-
 package types
 
 // TransactionCompleted represents a TransactionCompleted model.
 type TransactionCompleted struct {
-  Id string
-  Details *TransactionDetails
-  Context *TxContext
+	Id      string              `json:"id" mapstructure:"id"`
+	Details *TransactionDetails `json:"details" mapstructure:"details"`
+	Context *TxContext          `json:"context" mapstructure:"context"`
 }

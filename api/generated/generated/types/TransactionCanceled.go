@@ -1,8 +1,7 @@
-
 package types
 
 // TransactionCanceled represents a TransactionCanceled model.
 type TransactionCanceled struct {
-  Id string
-  Context *TxContext
+	Id      string     `json:"id" mapstructure:"id"`
+	Context *TxContext `json:"context" mapstructure:"context"`
 }
