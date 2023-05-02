@@ -357,6 +357,7 @@ components:
       type: object
       required:
         - code
+        - key
         - message
       properties:
         code:
@@ -366,6 +367,8 @@ components:
           type: string
         message:
           type: string
+        externalRef:
+          $ref: "#/components/schemas/errorRef"
       additionalProperties: false
       example:
         code: 400
@@ -477,3 +480,6 @@ components:
         active:
           type: boolean
       additionalProperties: false
+
+    errorRef:
+      type: string
